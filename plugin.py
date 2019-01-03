@@ -27,13 +27,17 @@
 import Domoticz
 
 class BasePlugin:
-    enabled = False
+    enabled = True
     def __init__(self):
-        #self.var = 123
+        self.host = None
+	self.port = 10684
+	self.udpConn = None
         return
 
     def onStart(self):
         Domoticz.Log("onStart called")
+	self.host=Parameters['Address']
+	self.udpConn = Domoticz.Connection(Name='ProscenicServer', Transport='UDP/IP', Protocol='None', Address=self.host, Port=self.port)
 
     def onStop(self):
         Domoticz.Log("onStop called")
