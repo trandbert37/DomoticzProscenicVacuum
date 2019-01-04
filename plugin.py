@@ -25,9 +25,41 @@
 </plugin>
 """
 import Domoticz
+from base64 import b64encode
 
 class BasePlugin:
     enabled = True
+
+    controlUnit = 1
+    modeUnit = 2
+
+    controlOptions = {
+        "LevelActions": "||",
+        "LevelNames": "Off|Run|Dock",
+        "LevelOffHidden": "false",
+        "SelectorStyle": "0"
+    }
+
+    modeOptions = {
+        "LevelActions": "|||",
+        "LevelNames": "Auto|Area|Edge|Zigzag",
+        "LevelOffHidden": "true",
+        "SelectorStyle": "0"
+    }
+
+    control = {
+        0: "AA55A55A0DFDE20906000100030000000000", #Off
+        10: "AA55A55A0DFDE20906000100020000000100", #RUN
+        20: "AA55A55A0FFDE20906000100010000000000" #DOCK
+    }
+
+    mode = {
+        10: "AA55A55A09FDE20906000100020500000000", #AUTO
+        20: "AA55A55A0AFDE20906000100020400000000", #AREA
+        30: "AA55A55A0BFDE20906000100020300000000", #EDGE
+        40: "AA55A55A0CFDE20906000100020200000000" #ZIGZAG
+    }
+
     def __init__(self):
         self.host = None
         self.port = "10684"
@@ -39,17 +71,36 @@ class BasePlugin:
         self.host=Parameters['Address']
         self.udpConn = Domoticz.Connection(Name='ProscenicServer', Transport='UDP/IP', Protocol='None', Address=self.host, Port=self.port)
 
+        if self.controlUnit not in Devices:
+            Domoticz.Device(Name='Control', Unit=self.controlUnit, TypeName='Selector Switch', Options=self.controlOptions).Create()
+
+        if self.modeUnit not in Devices:
+            Domoticz.Device(Name='Mode', Unit=self.modeUnit, TypeName='Selector Switch', Options=self.modeOptions).Create()
     def onStop(self):
         Domoticz.Log("onStop called")
 
     def onConnect(self, Connection, Status, Description):
-        Domoticz.Log("onConnect called")
+        Domoticz.Log("onConnect called " + str(Description))
 
     def onMessage(self, Connection, Data):
         Domoticz.Log("onMessage called")
 
     def onCommand(self, Unit, Command, Level, Hue):
         Domoticz.Log("onCommand called for Unit " + str(Unit) + ": Parameter '" + str(Command) + "', Level: " + str(Level))
+        if self.controlUnit == Unit:
+            self.apiRequest(Level, self.control)
+        elif self.modeUnit == Unit:
+            self.apiRequest(Level, self.mode)
+
+
+    def apiRequest(self, cmd_number, action):
+        try:
+            encodedBody = b64encode(b'<TRANSIT_INFO><COMMAND>ROBOT_CMD</COMMAND><RTU>' + action[cmd_number].encode() + b'</RTU></TRANSIT_INFO>')
+            self.udpConn.Send('<HEADER MsgType="MSG_TRANSIT_SHAS_REQ" MsgSeq="1" From="02000000000000000" To="01801930aea421f164" Keep="1"/><BODY>' + encodedBody.decode() + '</BODY></MESSAGE>\r\n\r\n')
+            return True
+        except Exception as e:
+            Domoticz.Error('Send exception [%s]' % str(e))
+            return False
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
         Domoticz.Log("Notification: " + Name + "," + Subject + "," + Text + "," + Status + "," + str(Priority) + "," + Sound + "," + ImageFile)
