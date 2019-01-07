@@ -33,6 +33,8 @@ class BasePlugin:
     controlUnit = 1
     modeUnit = 2
 
+    iconName = 'proscenic-790t-vacuum-icon'
+
     controlOptions = {
         "LevelActions": "||",
         "LevelNames": "Off|Run|Dock",
@@ -42,7 +44,7 @@ class BasePlugin:
 
     modeOptions = {
         "LevelActions": "|||",
-        "LevelNames": "Auto|Area|Edge|Zigzag",
+        "LevelNames": "Off|Auto|Area|Edge|Zigzag",
         "LevelOffHidden": "true",
         "SelectorStyle": "0"
     }
@@ -71,11 +73,14 @@ class BasePlugin:
         self.host=Parameters['Address']
         self.udpConn = Domoticz.Connection(Name='ProscenicServer', Transport='UDP/IP', Protocol='None', Address=self.host, Port=self.port)
 
+        if self.iconName not in Images: Domoticz.Image('icons.zip').Create()
+        iconID = Images[self.iconName].ID
+
         if self.controlUnit not in Devices:
-            Domoticz.Device(Name='Control', Unit=self.controlUnit, TypeName='Selector Switch', Options=self.controlOptions).Create()
+            Domoticz.Device(Name='Control', Unit=self.controlUnit, TypeName='Selector Switch', Image=iconID, Options=self.controlOptions).Create()
 
         if self.modeUnit not in Devices:
-            Domoticz.Device(Name='Mode', Unit=self.modeUnit, TypeName='Selector Switch', Options=self.modeOptions).Create()
+            Domoticz.Device(Name='Mode', Unit=self.modeUnit, TypeName='Selector Switch', Image=iconID, Options=self.modeOptions).Create()
 
     def onStop(self):
         Domoticz.Log("onStop called")
@@ -129,6 +134,11 @@ def UpdateDevice(Unit, nValue, sValue, BatteryLevel=255, AlwaysUpdate=False):
             sValue,
             BatteryLevel
         ))
+
+def UpdateIcon(Unit, iconID):
+    if Unit not in Devices: return
+    d = Devices[Unit]
+    if d.Image != iconID: d.Update(d.nValue, d.sValue, Image=iconID)
 
 global _plugin
 _plugin = BasePlugin()
