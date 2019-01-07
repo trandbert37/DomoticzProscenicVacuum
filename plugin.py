@@ -69,7 +69,6 @@ class BasePlugin:
         return
 
     def onStart(self):
-        Domoticz.Log("onStart called")
         self.host=Parameters['Address']
         self.udpConn = Domoticz.Connection(Name='ProscenicServer', Transport='UDP/IP', Protocol='None', Address=self.host, Port=self.port)
 
@@ -83,16 +82,16 @@ class BasePlugin:
             Domoticz.Device(Name='Mode', Unit=self.modeUnit, TypeName='Selector Switch', Image=iconID, Options=self.modeOptions).Create()
 
     def onStop(self):
-        Domoticz.Log("onStop called")
+        pass
 
     def onConnect(self, Connection, Status, Description):
-        Domoticz.Log("onConnect called " + str(Description))
+        pass
 
     def onMessage(self, Connection, Data):
-        Domoticz.Log("onMessage called")
+        pass
 
     def onCommand(self, Unit, Command, Level, Hue):
-        Domoticz.Log("onCommand called for Unit " + str(Unit) + ": Parameter '" + str(Command) + "', Level: " + str(Level))
+        Domoticz.Debug("onCommand called for Unit " + str(Unit) + ": Parameter '" + str(Command) + "', Level: " + str(Level))
         if self.controlUnit == Unit:
             if self.apiRequest(Level, self.control):
                 UpdateDevice(self.controlUnit, Level)
@@ -114,13 +113,13 @@ class BasePlugin:
             return False
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
-        Domoticz.Log("Notification: " + Name + "," + Subject + "," + Text + "," + Status + "," + str(Priority) + "," + Sound + "," + ImageFile)
+        pass
 
     def onDisconnect(self, Connection):
-        Domoticz.Log("onDisconnect called")
+        pass
 
     def onHeartbeat(self):
-        Domoticz.Log("onHeartbeat called")
+        pass
 
 def UpdateDevice(Unit, sValue, BatteryLevel=255, AlwaysUpdate=False):
     if Unit not in Devices: return
