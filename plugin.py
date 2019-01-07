@@ -6,18 +6,9 @@
 <plugin key="ProscenicVaccum" name="Proscenic Vacuum" author="trandbert37" version="1.0.0" externallink="https://github.com/trandbert37/DomoticzProscenicVacuum">
     <description>
         <h2>Proscenic vacuum</h2><br/>
-        Overview...
-        <h3>Features</h3>
-        <ul style="list-style-type:square">
-            <li>Feature one...</li>
-            <li>Feature two...</li>
-        </ul>
-        <h3>Devices</h3>
-        <ul style="list-style-type:square">
-            <li>Device Type - What it does...</li>
-        </ul>
+        Python plugin to control your Proscenic Vacuum<br/><br/>
         <h3>Configuration</h3>
-        Configuration options...
+        IP Address can be found in your router configuration
     </description>
     <params>
     <param field="Address" label="IP Address" width="200px" required="true"/>
