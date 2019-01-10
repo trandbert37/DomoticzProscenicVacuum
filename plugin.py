@@ -6,17 +6,15 @@
 <plugin key="ProscenicVaccum" name="Proscenic Vacuum" author="trandbert37" version="1.0.0" externallink="https://github.com/trandbert37/DomoticzProscenicVacuum">
     <description>
         <h2>Proscenic vacuum</h2><br/>
-        Python plugin to control your Proscenic Vacuum<br/><br/>
-        <h3>Configuration</h3>
-        IP Address can be found in your router configuration
+        Python plugin to control your Proscenic Vacuum
     </description>
-    <params>
-    <param field="Address" label="IP Address" width="200px" required="true"/>
-    </params>
 </plugin>
 """
 import Domoticz
+
+import xml.etree.cElementTree as ET
 from base64 import b64encode
+from socket import *
 
 class BasePlugin:
     enabled = True
@@ -54,15 +52,10 @@ class BasePlugin:
     }
 
     def __init__(self):
-        self.host = None
-        self.port = "10684"
-        self.udpConn = None
+        self.port = 10684
         return
 
     def onStart(self):
-        self.host=Parameters['Address']
-        self.udpConn = Domoticz.Connection(Name='ProscenicServer', Transport='UDP/IP', Protocol='None', Address=self.host, Port=self.port)
-
         if self.iconName not in Images: Domoticz.Image('icons.zip').Create()
         iconID = Images[self.iconName].ID
 
@@ -93,14 +86,29 @@ class BasePlugin:
                 UpdateDevice(self.modeUnit, Level)
                 UpdateDevice(self.controlUnit, 10)
 
-    def apiRequest(self, cmd_number, action):
+    def generateMessageBody(self, command, action):
+        transitInfo = ET.Element('TRANSIT_INFO')
+        ET.SubElement(transitInfo, 'COMMAND').text = 'ROBOT_CMD'
+        ET.SubElement(transitInfo, 'RTU').text = action[command]
+        return ET.tostring(transitInfo)
+
+    def apiRequest(self, command, action):
         try:
-            encodedBody = b64encode(b'<TRANSIT_INFO><COMMAND>ROBOT_CMD</COMMAND><RTU>' + action[cmd_number].encode() + b'</RTU></TRANSIT_INFO>')
-            self.udpConn.Send('<HEADER MsgType="MSG_TRANSIT_SHAS_REQ" MsgSeq="1" From="02000000000000000" To="01801930aea421f164" Keep="1"/><BODY>' + encodedBody.decode() + '</BODY></MESSAGE>\r\n\r\n')
+            cs = socket(AF_INET, SOCK_DGRAM)
+            cs.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+            cs.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+
+            message = ET.Element("MESSAGE", Version="1.0")
+            ET.SubElement(message, "HEADER", MsgType="MSG_TRANSIT_SHAS_REQ", MsgSeq="1", From="020000000000000000", To="01801930aea421f164", Keep="0")
+            ET.SubElement(message, "BODY").text = b64encode(self.generateMessageBody(command, action)).decode('ascii')
+
+            cs.sendto(ET.tostring(message, encoding='utf8', method='xml'), ('255.255.255.255', self.port))
+
             return True
 
         except Exception as e:
             Domoticz.Error('Send exception [%s]' % str(e))
+
             return False
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
