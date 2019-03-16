@@ -72,7 +72,7 @@ class BasePlugin:
             Domoticz.Device(Name='Mode', Unit=self.modeUnit, TypeName='Selector Switch', Image=iconID, Options=self.modeOptions).Create()
 
         if self.voiceUnit not in Devices:
-            Domoticz.Device(Name='Voice', Unit=self.voiceUnit, TypeName='Switch', Image=Images['Speaker'].ID).Create()
+            Domoticz.Device(Name='Voice', Unit=self.voiceUnit, TypeName='Switch').Create()
 
     def onStop(self):
         pass
