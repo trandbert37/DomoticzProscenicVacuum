@@ -21,6 +21,7 @@ class BasePlugin:
 
     controlUnit = 1
     modeUnit = 2
+    voiceUnit = 3
 
     iconName = 'proscenic-790t-vacuum-icon'
 
@@ -51,6 +52,11 @@ class BasePlugin:
         40: "AA55A55A0CFDE20906000100020200000000" #ZIGZAG
     }
 
+    voiceStatus = {
+        0: "AA55A55A0BFDE20906000100040000000001", #Off
+        1: "AA55A55A0AFDE20906000100040000000002", #On
+    }
+
     def __init__(self):
         self.port = 10684
         return
@@ -64,6 +70,9 @@ class BasePlugin:
 
         if self.modeUnit not in Devices:
             Domoticz.Device(Name='Mode', Unit=self.modeUnit, TypeName='Selector Switch', Image=iconID, Options=self.modeOptions).Create()
+
+        if self.voiceUnit no in Devices:
+            Domoticz.Device(Name='Voice', Unit=self.voiceUnit, TypeName='Switch', Image=Images['Speaker'].ID).Create()
 
     def onStop(self):
         pass
@@ -85,6 +94,9 @@ class BasePlugin:
             if self.apiRequest(Level, self.mode):
                 UpdateDevice(self.modeUnit, Level)
                 UpdateDevice(self.controlUnit, 10)
+        elif self.voiceUnit == Unit:
+            if self.apiRequest(Level, self.voiceStatus):
+                UpdateDevice(self.voiceUnit, Level)
 
     def generateMessageBody(self, command, action):
         transitInfo = ET.Element('TRANSIT_INFO')
